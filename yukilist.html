@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YukiList — Your Anime List, Your Way.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --yellow: #eab308;
+    --yellow-light: #facc15;
+    --yellow-dim: #ca8a04;
+    --yellow-glow: rgba(234, 179, 8, 0.13);
+    --yellow-border: rgba(234, 179, 8, 0.22);
+    --bg: #08080a;
+    --bg2: #0e0e11;
+    --bg3: #131318;
+    --text: #fefce8;
+    --text-muted: rgba(254, 252, 232, 0.5);
+    --text-dim: rgba(254, 252, 232, 0.22);
+    --border: rgba(255,255,255,0.06);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Unbounded', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 600px;
+    background: radial-gradient(ellipse at center, rgba(234,179,8,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(8,8,10,0.8);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .nav-logo img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  .nav-logo span {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text);
+  }
+
+  .nav-badge {
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--yellow-glow);
+    border: 1px solid var(--yellow-border);
+    color: var(--yellow);
+    letter-spacing: 0.08em;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 5rem 2rem 4rem;
+  }
+
+  .hero-logo-wrap {
+    position: relative;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.1s forwards;
+  }
+
+  .hero-logo-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(234,179,8,0.18) 0%, transparent 70%);
+  }
+
+  .hero-logo {
+    width: 120px;
+    height: 120px;
+    border-radius: 28px;
+    border: 1.5px solid var(--yellow-border);
+    box-shadow: 0 0 40px rgba(234,179,8,0.12);
+    position: relative;
+    z-index: 1;
+    display: block;
+  }
+
+  .hero-eyebrow {
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    color: var(--yellow);
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.25s forwards;
+  }
+
+  .hero-title {
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.35s forwards;
+  }
+
+  .hero-title .accent { color: var(--yellow); }
+
+  .hero-sub {
+    font-size: clamp(0.65rem, 1.2vw, 0.8rem);
+    font-weight: 300;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    max-width: 480px;
+    line-height: 1.9;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.4s forwards;
+  }
+
+  .hero-tagline {
+    font-size: clamp(0.65rem, 1.2vw, 0.8rem);
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    margin-bottom: 3rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.45s forwards;
+  }
+
+  .tagline-sep { margin: 0 0.8rem; color: var(--text-dim); }
+
+  /* IMPORT BADGES */
+  .import-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.5s forwards;
+    flex-wrap: wrap;
+  }
+
+  .import-label {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  .import-badge {
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    background: var(--bg2);
+  }
+
+  .btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 1rem 2.2rem;
+    border-radius: 14px;
+    background: var(--yellow);
+    color: #1a1000;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    box-shadow: 0 0 30px rgba(234,179,8,0.25);
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.55s forwards;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-download::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  }
+
+  .btn-download:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 50px rgba(234,179,8,0.4);
+    background: var(--yellow-light);
+  }
+
+  .btn-download:active { transform: translateY(0); }
+
+  .btn-download svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.85rem 1.8rem;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.65s forwards;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--yellow-border);
+    color: var(--yellow);
+    background: var(--yellow-glow);
+  }
+
+  .btn-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .version-info {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    margin-top: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.75s forwards;
+  }
+
+  #version-tag { color: var(--yellow); }
+
+  /* DIVIDER */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--yellow-border), transparent);
+  }
+
+  /* FEATURES */
+  .features {
+    padding: 5rem 2.5rem;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--yellow);
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: -0.02em;
+    margin-bottom: 3.5rem;
+    color: var(--text);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    background: var(--border);
+  }
+
+  .feature-card {
+    background: var(--bg2);
+    padding: 2rem;
+    transition: background 0.2s;
+  }
+
+  .feature-card:hover { background: var(--bg3); }
+
+  .feat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--yellow-glow);
+    border: 1px solid var(--yellow-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.2rem;
+  }
+
+  .feat-icon svg { width: 20px; height: 20px; color: var(--yellow); stroke: var(--yellow); }
+
+  .feature-card h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .feature-card p {
+    font-size: 0.7rem;
+    font-weight: 300;
+    color: var(--text-muted);
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+  }
+
+  /* COMPARE SECTION */
+  .compare {
+    padding: 0 2.5rem 5rem;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .compare-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    background: var(--bg2);
+  }
+
+  .compare-card.featured {
+    border-color: var(--yellow-border);
+    background: linear-gradient(135deg, rgba(234,179,8,0.05) 0%, var(--bg2) 60%);
+  }
+
+  .compare-card .chip {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 3px 8px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 0.8rem;
+  }
+
+  .compare-card.featured .chip {
+    background: var(--yellow-glow);
+    border: 1px solid var(--yellow-border);
+    color: var(--yellow);
+  }
+
+  .compare-card:not(.featured) .chip {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  .compare-card h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+  }
+
+  .compare-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .compare-list li {
+    font-size: 0.65rem;
+    font-weight: 300;
+    color: var(--text-muted);
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .compare-list li .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--yellow);
+    flex-shrink: 0;
+  }
+
+  .compare-list li.muted .dot { background: var(--text-dim); }
+  .compare-list li.muted { color: var(--text-dim); }
+
+  /* BANNER */
+  .banner {
+    margin: 0 2.5rem 5rem;
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid var(--yellow-border);
+    border-radius: 20px;
+    padding: 3rem 3.5rem;
+    background: linear-gradient(135deg, rgba(234,179,8,0.05) 0%, var(--bg2) 60%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .banner-text h2 {
+    font-size: clamp(1.3rem, 3vw, 1.8rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.4rem;
+  }
+
+  .banner-text p {
+    font-size: 0.7rem;
+    font-weight: 300;
+    color: var(--text-muted);
+    letter-spacing: 0.03em;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .footer-brand img {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    opacity: 0.7;
+  }
+
+  .footer-brand span {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .footer-links a {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--yellow); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .btn-download.loading { opacity: 0.7; pointer-events: none; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--yellow-border); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav>
+    <a class="nav-logo" href="#">
+      <img src="https://github.com/YukitanCore/YukiList/blob/main/YukiList.png?raw=true" alt="YukiList">
+      <span>YUKILIST</span>
+    </a>
+    <div style="display:flex;align-items:center;gap:0.8rem;">
+      <a href="https://yukilist.vercel.app/" target="_blank" style="font-size:0.6rem;font-weight:600;letter-spacing:0.08em;color:var(--yellow);text-decoration:none;border:1px solid var(--yellow-border);padding:5px 12px;border-radius:20px;background:var(--yellow-glow);transition:background 0.2s;">WEB VERSION ↗</a>
+      <span class="nav-badge">ANDROID</span>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-logo-wrap">
+      <img class="hero-logo" src="https://github.com/YukitanCore/YukiList/blob/main/YukiList.png?raw=true" alt="YukiList Logo">
+    </div>
+
+    <p class="hero-eyebrow">Anime · Manga · List Tracker</p>
+
+    <h1 class="hero-title">Yuki<span class="accent">List</span></h1>
+
+    <p class="hero-sub">
+      Kelola watchlist lo, pantau progress nonton,<br>dan temukan anime favorit berikutnya — semua di satu tempat.
+    </p>
+
+    <p class="hero-tagline">
+      Free<span class="tagline-sep">·</span>No Iklan<span class="tagline-sep">·</span>Forever.
+    </p>
+
+    <div class="import-row">
+      <span class="import-label">IMPORT DARI</span>
+      <span class="import-badge">MyAnimeList</span>
+      <span class="import-badge">AniList</span>
+    </div>
+
+    <div class="btn-group">
+      <a id="btn-dl" class="btn-download loading" href="#" onclick="return false;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span id="btn-text">Memuat...</span>
+      </a>
+      <a class="btn-secondary" href="https://yukilist.vercel.app/" target="_blank">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        Web Version
+      </a>
+      <a class="btn-secondary" href="https://github.com/YukitanCore/YukiList" target="_blank">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
+
+    <p class="version-info">Latest release: <span id="version-tag">...</span> · APK siap install</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="features">
+    <p class="section-label">Kenapa YukiList?</p>
+    <h2 class="section-title">List tracker anime.<br>Yang beneran <span style="color:var(--yellow)">lo punya.</span></h2>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <h3>List Pribadi</h3>
+        <p>Akun & progress lo tersimpan di server YukitanCore. Data anime tetap dari MAL via Jikan API.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+        </div>
+        <h3>Import MAL & AniList</h3>
+        <p>Pindah dari MAL atau AniList gampang banget. Import semua list lo lewat web tanpa ketik ulang satu-satu.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        </div>
+        <h3>Zero Iklan</h3>
+        <p>Ngelola list tanpa iklan nyempil di mana-mana. Pure tracker experience.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <h3>Social Feed</h3>
+        <p>Liat aktivitas temen lo real-time. Tau mereka lagi nonton apa, rating berapa, dan udah selesai apa.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        </div>
+        <h3>User Profile</h3>
+        <p>Cek profil user lain — total anime, episode ditonton, mean score, dan list lengkap mereka.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        </div>
+        <h3>Web + App Sync</h3>
+        <p>Akun lo sama di web dan app. Update list di web, langsung keliatan di app. Satu akun, dua platform.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        </div>
+        <h3>Android Native</h3>
+        <p>Dibangun khusus Android. Ringan, responsif, dan enak di tangan.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <h3>Custom Status</h3>
+        <p>Watching, On-Hold, Dropped, Completed, Plan to Watch. Semua status yang lo butuhin ada.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <h3>Rating & Review</h3>
+        <p>Kasih rating dan tulis review sendiri. Buat kenangan di setiap anime yang udah lo tonton.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="compare">
+    <p class="section-label" style="margin-top:5rem;">Perbandingan</p>
+    <h2 class="section-title" style="margin-bottom:2.5rem;">YukiList vs yang lain</h2>
+
+    <div class="compare-grid">
+      <div class="compare-card featured">
+        <span class="chip">YUKILIST</span>
+        <h3>YukiList <span style="color:var(--yellow)">✦</span></h3>
+        <ul class="compare-list">
+          <li><span class="dot"></span>Database anime dari MAL (Jikan API)</li>
+          <li><span class="dot"></span>Akun & list di server sendiri</li>
+          <li><span class="dot"></span>Gak ada iklan sama sekali</li>
+          <li><span class="dot"></span>App Android + Web version</li>
+          <li><span class="dot"></span>Social feed & user profile</li>
+          <li><span class="dot"></span>Import dari MAL & AniList</li>
+          <li><span class="dot"></span>Gratis selamanya</li>
+        </ul>
+      </div>
+
+      <div class="compare-card">
+        <span class="chip">MYANIMELIST</span>
+        <h3>MyAnimeList</h3>
+        <ul class="compare-list">
+          <li><span class="dot"></span>Database paling lengkap</li>
+          <li><span class="dot"></span>Komunitas besar</li>
+          <li><span class="dot"></span>Ada social feed</li>
+          <li class="muted"><span class="dot"></span>Penuh iklan</li>
+          <li class="muted"><span class="dot"></span>App kurang optimal</li>
+          <li class="muted"><span class="dot"></span>Akun terikat di MAL</li>
+        </ul>
+      </div>
+
+      <div class="compare-card">
+        <span class="chip">ANILIST</span>
+        <h3>AniList</h3>
+        <ul class="compare-list">
+          <li><span class="dot"></span>UI modern & clean</li>
+          <li><span class="dot"></span>Gratis & minim iklan</li>
+          <li><span class="dot"></span>Ada web version</li>
+          <li class="muted"><span class="dot"></span>Gak ada app Android</li>
+          <li class="muted"><span class="dot"></span>Social feed terbatas</li>
+          <li class="muted"><span class="dot"></span>Akun terikat di AniList</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="banner" style="margin-top:2rem;">
+    <div class="banner-text">
+      <h2>Mulai tracking sekarang.<br><span style="color:var(--yellow)">List lo, aturan lo.</span></h2>
+      <p>Gratis. Selamanya. App & Web sync otomatis.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0.8rem;align-items:flex-end;flex-shrink:0;">
+      <a id="btn-dl2" class="btn-download loading" href="#" onclick="return false;" style="opacity:1;animation:none;white-space:nowrap;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span id="btn-text2">Download APK</span>
+      </a>
+      <a href="https://yukilist.vercel.app/" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:0.75rem 1.8rem;border-radius:14px;border:1px solid var(--yellow-border);color:var(--yellow);font-family:'Unbounded',sans-serif;font-size:0.75rem;font-weight:600;letter-spacing:0.05em;text-decoration:none;background:var(--yellow-glow);white-space:nowrap;transition:all 0.2s;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        Buka Web Version
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-brand">
+      <img src="https://github.com/YukitanCore/YukiList/blob/main/YukiList.png?raw=true" alt="YukiList">
+      <span>YUKILIST · YUKITAN CORE</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/YukitanCore/YukiList" target="_blank">GitHub</a>
+      <a href="https://github.com/YukitanCore/YukiList/releases" target="_blank">Releases</a>
+      <a href="https://github.com/YukitanCore/YukiList/issues" target="_blank">Issues</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+(async () => {
+  try {
+    const res = await fetch('https://api.github.com/repos/YukitanCore/YukiList/releases/latest');
+    const data = await res.json();
+
+    const version = data.tag_name || 'latest';
+    const apk = data.assets?.find(a => a.name.endsWith('.apk'));
+    const url = apk?.browser_download_url || 'https://github.com/YukitanCore/YukiList/releases/latest';
+
+    document.getElementById('version-tag').textContent = version;
+
+    const setBtn = (id, txtId) => {
+      const btn = document.getElementById(id);
+      btn.href = url;
+      btn.onclick = null;
+      btn.classList.remove('loading');
+      document.getElementById(txtId).textContent = 'Download APK';
+    };
+
+    setBtn('btn-dl', 'btn-text');
+    setBtn('btn-dl2', 'btn-text2');
+
+  } catch (e) {
+    const fallback = 'https://github.com/YukitanCore/YukiList/releases/latest';
+    document.getElementById('version-tag').textContent = 'latest';
+
+    const setBtn = (id, txtId) => {
+      const btn = document.getElementById(id);
+      btn.href = fallback;
+      btn.onclick = null;
+      btn.classList.remove('loading');
+      document.getElementById(txtId).textContent = 'Download APK';
+    };
+
+    setBtn('btn-dl', 'btn-text');
+    setBtn('btn-dl2', 'btn-text2');
+  }
+})();
+</script>
+</body>
+</html>
